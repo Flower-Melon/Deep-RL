@@ -137,6 +137,13 @@ cd .\PPO
 python .\train.py --mode test --env_name "BipedalWalker-v3"
 ```
 
+## 测试效果
+
+在`BipedalWalker-v3`环境中进行测试
+
+![TD3效果](https://raw.githubusercontent.com/Flower-Melon/image/main/img/2025/TD3效果.gif)
+![PPO效果](https://raw.githubusercontent.com/Flower-Melon/image/main/img/2025/PPO效果.gif)
+
 ## 参考
 
 - 算法参考：
