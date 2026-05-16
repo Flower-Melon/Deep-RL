@@ -1,8 +1,9 @@
-# Deep RL 实践仓库（PPO 与 TD3）
+# Deep RL 实践仓库（PPO、TD3 与 SAC）
 
-本仓库包含两个在连续动作空间上常用的深度强化学习算法实现：
+本仓库包含三个在连续动作空间上常用的深度强化学习算法实现：
 - PPO（Proximal Policy Optimization）
 - TD3（Twin Delayed Deep Deterministic Policy Gradient）
+- SAC（Soft Actor-Critic）
 
 基于 PyTorch 与 Gymnasium，支持在 Pendulum-v1 与 BipedalWalker-v3 等经典环境上训练与评测，并提供若干已训练权重与详细笔记。
 
@@ -100,6 +101,44 @@ python .\train.py --mode test
 训练阶段会在探索时对选出的动作加入高斯噪声，促进样本多样性；当经验池大小超过 `batch_size` 时开始每步更新。
 
 
+### 3) 训练 SAC
+
+```powershell
+cd .\SAC
+python .\train.py
+```
+
+常用参数：
+- `--env_name` 训练环境，默认 `Pendulum-v1`（也支持 `BipedalWalker-v3`）
+- `--iteration` 训练回合数（默认 500）
+- `--max_step` 每回合最大交互步数（默认 2000）
+- `--learning_rate` 学习率（默认 3e-4）
+- `--batch_size` 批大小（默认 256）
+- `--gamma` 折扣因子（默认 0.99）
+- `--tau` 目标网络软更新系数（默认 0.005）
+- `--alpha` 熵正则化系数（默认 0.2，仅在 `--automatic_entropy_tuning` 禁用时生效）
+- `--automatic_entropy_tuning` 是否自动调整熵系数（默认 True）
+- `--start_steps` 训练初期随机探索步数（默认 10000）
+- `--updates_per_step` 每步环境交互后更新次数（默认 1）
+- `--seed` 随机种子（默认 42）
+- `--load_model` 是否加载已有权重（默认 False）
+- `--model_path` 模型保存/加载目录（默认 `./models/{env_name}/`）
+
+示例：
+```powershell
+# 指定环境与随机种子
+python .\train.py --env_name "BipedalWalker-v3" --seed 10
+
+# 继续训练
+python .\train.py --load_model True
+
+# 测试
+python .\train.py --mode test
+```
+
+SAC 使用随机策略进行探索；训练初期 `start_steps` 步内完全随机采样以填充经验池，之后基于当前策略采样动作并每步更新。自动熵调整会根据环境自动学习合适的探索程度。
+
+
 ## 算法与实现要点
 
 ### PPO（PPO.py）
@@ -123,12 +162,24 @@ python .\train.py --mode test
 - 每步与环境交互并存入经验；当缓存量超过 `batch_size` 后进行更新。
 - 每 `policy_freq` 次 Critic 更新后，执行一次 Actor 与三组目标网络的软更新。
 
+### SAC（SAC.py）
+- 随机策略 Actor：输出高斯分布参数（均值/对数标准差），通过重参数化技巧采样，经 tanh 压缩后缩放到动作空间。
+- 双 Q 网络（`critic_1`/`critic_2`）与各自目标网络，目标取最小值缓解高估。
+- 自动熵调整（Automatic Entropy Tuning）：将温度系数 α 作为可学习参数，目标熵设为 `-dim(A)`，梯度优化以平衡探索与利用。
+- Off-policy：使用循环数组实现的经验回放（`utils.Replay_buffer`）。
+- 目标网络采用 Polyak 软更新（`τ = 0.005`），每步都进行更新。
+
+训练逻辑（SAC/train.py）：
+- 前 `start_steps` 步使用均匀随机动作填充经验池，之后使用策略采样。
+- 经验池超过 `batch_size` 后，每步执行 `updates_per_step` 次更新。
+
 
 ## 预训练权重与复现
 
 仓库已包含以下环境的样例权重：
 - PPO: `PPO/models/BipedalWalker-v3/` 与 `PPO/models/Pendulum-v1/`
 - TD3: `TD3/models/BipedalWalker-v3/` 与 `TD3/models/Pendulum-v1/`
+- SAC: `SAC/models/Pendulum-v1/`
 
 直接进入对应子目录并使用测试模式即可渲染评测：
 ```powershell
@@ -149,3 +200,4 @@ python .\train.py --mode test --env_name "BipedalWalker-v3"
 - 算法参考：
   - PPO: Proximal Policy Optimization Algorithms (Schulman et al., 2017)
   - TD3: Addressing Function Approximation Error in Actor-Critic Methods (Fujimoto et al., 2018)
+  - SAC: Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor (Haarnoja et al., 2018)
