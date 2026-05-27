@@ -1,0 +1,17 @@
+Env: BipedalWalker-v3
+Seed: 42
+Model: ./models/BipedalWalker-v3/
+
+Episode 1: -12.68
+Episode 2: 305.11
+Episode 3: 308.44
+Episode 4: 307.56
+Episode 5: -11.30
+Episode 6: 307.43
+Episode 7: 145.02
+Episode 8: -33.28
+Episode 9: 303.51
+Episode 10: 305.68
+
+Average: 192.55
+Best:   308.44

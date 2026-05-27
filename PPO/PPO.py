@@ -160,11 +160,15 @@ class PPO():
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
 
         # PPO 训练循环（更新ppo_epochs轮次）
+        total_actor_loss = 0.0
+        total_critic_loss = 0.0
+        n_updates = 0
+
         for _ in range(self.ppo_epochs):
-            
+
             # 随机打乱数据索引
             indices = T.randperm(memory_size)
-            
+
             # 按照 batch_size 划分 mini-batch，进行多次更新
             for start in range(0, memory_size, batch_size):
                 end = start + batch_size
@@ -179,15 +183,15 @@ class PPO():
                 batch_old_log_probs = old_log_probs[batch_indices]
                 batch_advantages = advantages[batch_indices]
                 batch_v_targets = v_targets[batch_indices]
-                
+
                 # 计算 Actor 损失 (PPO-Clip)
                 mu, sigma = self.actor(batch_states)
                 dist = T.distributions.Normal(mu, sigma)
                 # new_log_probs 形状为 (batch_size, 1)，与 batch_old_log_probs 形状匹配
                 new_log_probs = dist.log_prob(batch_actions).sum(dim=-1).view(-1, 1)
-                
+
                 ratios = T.exp(new_log_probs - batch_old_log_probs)
-                
+
                 # 计算 PPO-Clip surrogate loss
                 surr1 = ratios * batch_advantages  # 未截断的 surrogate
                 surr2 = T.clamp(ratios, 1 - self.clip_param, 1 + self.clip_param) * batch_advantages  # 截断后的 surrogate
@@ -197,24 +201,32 @@ class PPO():
                 ent_coef = 0.01 # 熵正则化系数
 
                 actor_loss = -T.min(surr1, surr2).mean() - ent_coef * ent_bonus  # 取最小值并取负号作为损失
-                
+
                 # 计算 Critic 损失
                 current_values = self.critic(batch_states)
                 critic_loss = F.smooth_l1_loss(current_values, batch_v_targets)
-                
+
                 # 更新 Actor 和 Critic 网络
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 nn.utils.clip_grad_norm_(self.actor.parameters(), self.max_grad_norm)
                 self.actor_optimizer.step()
-                
+
                 self.critic_optimizer.zero_grad()
                 critic_loss.backward()
                 nn.utils.clip_grad_norm_(self.critic.parameters(), self.max_grad_norm)
                 self.critic_optimizer.step()
 
+                total_actor_loss += actor_loss.item()
+                total_critic_loss += critic_loss.item()
+                n_updates += 1
+
         # 清空经验池 (On-policy)
         self.clear_memory()
+
+        if n_updates > 0:
+            return total_actor_loss / n_updates, total_critic_loss / n_updates
+        return None, None
         
     def save(self, directory):
         """
