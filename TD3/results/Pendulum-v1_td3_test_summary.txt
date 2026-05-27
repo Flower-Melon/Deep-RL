@@ -1,0 +1,17 @@
+Env: Pendulum-v1
+Seed: 42
+Model: ./models/Pendulum-v1/
+
+Episode 1: -18.85
+Episode 2: -133.58
+Episode 3: -140.87
+Episode 4: -143.62
+Episode 5: -242.92
+Episode 6: -255.88
+Episode 7: -130.34
+Episode 8: -326.00
+Episode 9: -137.02
+Episode 10: -135.39
+
+Average: -166.45
+Best:   -18.85

@@ -160,6 +160,7 @@ class SAC():
         actor_loss.backward()
         self.actor_optimizer.step()
 
+        alpha_loss_val = None
         if self.automatic_entropy_tuning:
             alpha_loss = -(self.log_alpha * (log_prob + self.target_entropy).detach()).mean()
 
@@ -168,6 +169,9 @@ class SAC():
             self.alpha_optimizer.step()
 
             self.alpha = self.log_alpha.exp().item()
+            alpha_loss_val = alpha_loss.item()
+
+        return critic_1_loss.item(), critic_2_loss.item(), actor_loss.item(), alpha_loss_val
 
         for param, target_param in zip(self.critic_1.parameters(), self.critic_target_1.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)

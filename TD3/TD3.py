@@ -123,37 +123,45 @@ class TD3():
         # 更新价值网络
         current_q1 = self.critic_1(batch_s, batch_a)
         current_q2 = self.critic_2(batch_s, batch_a)
-        critic_1_loss = F.mse_loss(current_q1, target_q) 
+        critic_1_loss = F.mse_loss(current_q1, target_q)
         critic_2_loss = F.mse_loss(current_q2, target_q) # 注意这里target_q不需要detach，因为它已经在with T.no_grad()中计算过了
         # 更新Critic1网络
         self.critic_1_optimizer.zero_grad()
-        critic_1_loss.backward() 
+        critic_1_loss.backward()
         self.critic_1_optimizer.step()
         # 更新Critic2网络
         self.critic_2_optimizer.zero_grad()
         critic_2_loss.backward()
         self.critic_2_optimizer.step()
-        
+
+        c1_loss = critic_1_loss.item()
+        c2_loss = critic_2_loss.item()
+        a_loss = None
+
         # trick3:延迟更新策略网络和目标网络
         self.num_training += 1
         if self.num_training % self.policy_freq == 0:
             # 更新策略网络
             # 这里使用了Critic1网络来评估策略，.mean()是因为要把batch的Q值取平均
-            actor_loss = -self.critic_1(batch_s, self.actor(batch_s)).mean() 
+            actor_loss = -self.critic_1(batch_s, self.actor(batch_s)).mean()
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
             self.actor_optimizer.step()
-            
+
+            a_loss = actor_loss.item()
+
             # 软更新目标网络
             # 使用zip函数同时遍历两个网络的参数
             for param, target_param in zip(self.critic_1.parameters(), self.critic_target_1.parameters()):
                 target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-                
+
             for param, target_param in zip(self.critic_2.parameters(), self.critic_target_2.parameters()):
                 target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-                
+
             for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
                 target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
+        return c1_loss, c2_loss, a_loss
                             
     def save(self, directory):
         """
