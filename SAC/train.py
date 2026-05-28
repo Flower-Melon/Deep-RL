@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--env_name', default='BipedalWalker-v3', type=str)
     parser.add_argument('--seed', default=42, type=int)
 
-    parser.add_argument('--iteration', default=500, type=int)
+    parser.add_argument('--iteration', default=200, type=int)
     parser.add_argument('--learning_rate', default=3e-4, type=float)
     parser.add_argument('--batch_size', default=256, type=int)
     parser.add_argument('--max_step', default=2000, type=int)

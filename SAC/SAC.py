@@ -171,13 +171,13 @@ class SAC():
             self.alpha = self.log_alpha.exp().item()
             alpha_loss_val = alpha_loss.item()
 
-        return critic_1_loss.item(), critic_2_loss.item(), actor_loss.item(), alpha_loss_val
-
         for param, target_param in zip(self.critic_1.parameters(), self.critic_target_1.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
         for param, target_param in zip(self.critic_2.parameters(), self.critic_target_2.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+
+        return critic_1_loss.item(), critic_2_loss.item(), actor_loss.item(), alpha_loss_val
 
     def save(self, directory):
         os.makedirs(directory, exist_ok=True)

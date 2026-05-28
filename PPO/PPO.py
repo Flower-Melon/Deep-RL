@@ -73,7 +73,7 @@ class PPO():
         self.gae_lambda = gae_lambda # GAE 参数
         
         # 优化器
-        self.actor_optimizer = T.optim.Adam(self.actor.parameters(), lr=3e-5)
+        self.actor_optimizer = T.optim.Adam(self.actor.parameters(), lr)
         self.critic_optimizer = T.optim.Adam(self.critic.parameters(), lr=lr)
         
         # 经验池

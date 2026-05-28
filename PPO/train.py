@@ -20,7 +20,7 @@ def parse_args():
     # parser.add_argument('--env_name', default='Pendulum-v1', type=str) # 环境名称
     parser.add_argument('--seed', default=42, type=int) # 随机种子
     
-    parser.add_argument('--iteration', default=500, type=int) # 训练迭代的(回合)次数
+    parser.add_argument('--iteration', default=2000, type=int) # 训练迭代的(回合)次数
     parser.add_argument('--learning_rate', default=3e-4, type=float) # 学习率
     parser.add_argument('--batch_size', default=256, type=int) # PPO 更新时的 mini-batch 大小
     parser.add_argument('--max_step', default=1600, type=int) # 一个回合的最大步数
@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument('--model_path', default=None, type=str) # 模型路径
     parser.add_argument('--saveStep', default=100, type=int) # 每隔多少回合保存模型
     # 在 parse_args() 中
-    parser.add_argument('--buffer_size', default=2048, type=int) # 收集多少步数据后再更新
+    parser.add_argument('--buffer_size', default=1024, type=int) # 收集多少步数据后再更新
     
     return parser.parse_args()
 
